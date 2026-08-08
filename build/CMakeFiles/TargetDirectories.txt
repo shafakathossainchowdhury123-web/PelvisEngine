@@ -1,3 +1,0 @@
-/workspaces/PelvisEngine/build/CMakeFiles/PelvisEngine.dir
-/workspaces/PelvisEngine/build/CMakeFiles/edit_cache.dir
-/workspaces/PelvisEngine/build/CMakeFiles/rebuild_cache.dir
