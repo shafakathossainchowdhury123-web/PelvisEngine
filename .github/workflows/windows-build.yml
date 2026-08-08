@@ -1,4 +1,4 @@
-name: Windows Build
+name: Pelvis Engine - Windows Build
 
 on:
   push:
@@ -11,23 +11,41 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure
-        run: cmake -S . -B build -A x64
+      - name: Configure CMake
+        run: cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build
+      - name: Build Pelvis Engine
         run: cmake --build build --config Release --parallel
 
-      - name: Package
+      - name: Prepare package
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path package
-          Copy-Item build/Release/PelvisEngine.exe package/PelvisEngine.exe
 
-      - name: Upload Windows build
+          Copy-Item `
+            build/Release/PelvisEngine.exe `
+            package/PelvisEngine.exe
+
+          $dll = Get-ChildItem `
+            -Path build `
+            -Filter "SDL3.dll" `
+            -Recurse `
+            -File `
+            -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+
+          if ($dll) {
+            Copy-Item $dll.FullName package/SDL3.dll
+          }
+
+          Write-Host "Package contents:"
+          Get-ChildItem package
+
+      - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
           name: PelvisEngine-Windows-x64
-          path: package/PelvisEngine.exe
+          path: package
