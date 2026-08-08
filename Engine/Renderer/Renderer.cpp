@@ -1,25 +1,76 @@
 #include "Renderer.h"
 
+#include <SDL3/SDL_opengl.h>
+
 #include <iostream>
 
 namespace Pelvis
 {
-    bool Renderer::initialize(int width, int height)
+    bool Renderer::initialize(SDL_Window* window)
     {
-        if (width <= 0 || height <= 0)
+        if (!window)
         {
-            std::cerr << "Renderer: invalid resolution.\n";
+            std::cerr << "Renderer: invalid window.\n";
             return false;
         }
 
-        m_width = width;
-        m_height = height;
-        m_initialized = true;
+        m_window = window;
 
-        std::cout
-            << "Renderer initialized: "
-            << m_width << "x"
-            << m_height << '\n';
+        SDL_GL_SetAttribute(
+            SDL_GL_CONTEXT_MAJOR_VERSION,
+            3
+        );
+
+        SDL_GL_SetAttribute(
+            SDL_GL_CONTEXT_MINOR_VERSION,
+            3
+        );
+
+        SDL_GL_SetAttribute(
+            SDL_GL_CONTEXT_PROFILE_MASK,
+            SDL_GL_CONTEXT_PROFILE_CORE
+        );
+
+        m_context = SDL_GL_CreateContext(m_window);
+
+        if (!m_context)
+        {
+            std::cerr
+                << "OpenGL context creation failed: "
+                << SDL_GetError()
+                << '\n';
+
+            return false;
+        }
+
+        if (!SDL_GL_MakeCurrent(m_window, m_context))
+        {
+            std::cerr
+                << "Failed to make OpenGL context current: "
+                << SDL_GetError()
+                << '\n';
+
+            SDL_GL_DestroyContext(m_context);
+            m_context = nullptr;
+
+            return false;
+        }
+
+        SDL_GL_SetSwapInterval(1);
+
+        std::cout << "OpenGL renderer initialized.\n";
+
+        const GLubyte* version = glGetString(GL_VERSION);
+
+        if (version)
+        {
+            std::cout
+                << "OpenGL version: "
+                << version
+                << '\n';
+        }
+
+        m_initialized = true;
 
         return true;
     }
@@ -31,7 +82,14 @@ namespace Pelvis
             return;
         }
 
-        // Rendering commands will be added here.
+        glClearColor(
+            0.08f,
+            0.10f,
+            0.14f,
+            1.0f
+        );
+
+        glClear(GL_COLOR_BUFFER_BIT);
     }
 
     void Renderer::endFrame()
@@ -41,30 +99,20 @@ namespace Pelvis
             return;
         }
 
-        // Frame presentation will be added here.
+        SDL_GL_SwapWindow(m_window);
     }
 
     void Renderer::shutdown()
     {
-        if (!m_initialized)
+        if (m_context)
         {
-            return;
+            SDL_GL_DestroyContext(m_context);
+            m_context = nullptr;
         }
 
-        std::cout << "Renderer shutdown.\n";
-
+        m_window = nullptr;
         m_initialized = false;
-        m_width = 0;
-        m_height = 0;
-    }
 
-    int Renderer::width() const
-    {
-        return m_width;
-    }
-
-    int Renderer::height() const
-    {
-        return m_height;
+        std::cout << "OpenGL renderer shutdown.\n";
     }
 }

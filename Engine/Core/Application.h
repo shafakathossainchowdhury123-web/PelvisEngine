@@ -1,5 +1,9 @@
 #pragma once
 
+#include <SDL3/SDL.h>
+
+#include "../Renderer/Renderer.h"
+
 namespace Pelvis
 {
     class Application
@@ -14,5 +18,9 @@ namespace Pelvis
 
     private:
         bool m_running = false;
+
+        SDL_Window* m_window = nullptr;
+
+        Renderer m_renderer;
     };
 }

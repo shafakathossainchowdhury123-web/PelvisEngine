@@ -17,6 +17,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(SDL3)
 
+find_package(OpenGL REQUIRED)
+
 add_executable(PelvisEngine
     Engine/main.cpp
     Engine/Core/Application.cpp
@@ -26,6 +28,7 @@ add_executable(PelvisEngine
 target_link_libraries(PelvisEngine
     PRIVATE
     SDL3::SDL3
+    OpenGL::GL
 )
 
 target_compile_options(PelvisEngine PRIVATE

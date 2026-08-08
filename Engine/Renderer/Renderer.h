@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <SDL3/SDL.h>
 
 namespace Pelvis
 {
@@ -10,17 +10,14 @@ namespace Pelvis
         Renderer() = default;
         ~Renderer() = default;
 
-        bool initialize(int width, int height);
+        bool initialize(SDL_Window* window);
         void beginFrame();
         void endFrame();
         void shutdown();
 
-        int width() const;
-        int height() const;
-
     private:
-        int m_width = 0;
-        int m_height = 0;
+        SDL_Window* m_window = nullptr;
+        SDL_GLContext m_context = nullptr;
         bool m_initialized = false;
     };
 }
