@@ -19,10 +19,13 @@ FetchContent_MakeAvailable(SDL3)
 
 add_executable(PelvisEngine
     Engine/main.cpp
+    Engine/Core/Application.cpp
+    Engine/Renderer/Renderer.cpp
 )
 
 target_link_libraries(PelvisEngine
-    PRIVATE SDL3::SDL3
+    PRIVATE
+    SDL3::SDL3
 )
 
 target_compile_options(PelvisEngine PRIVATE
