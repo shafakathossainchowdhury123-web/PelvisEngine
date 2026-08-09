@@ -1,7 +1,6 @@
 #include "Renderer.h"
 
-#include <glad/glad.h>
-#include <SDL3/SDL_opengl.h>
+#include <glad/gl.h>
 
 #include <iostream>
 
@@ -39,6 +38,7 @@ namespace Pelvis
             if (!success)
             {
                 char infoLog[512]{};
+
                 glGetShaderInfoLog(
                     shader,
                     sizeof(infoLog),
@@ -137,15 +137,12 @@ namespace Pelvis
             return false;
         }
 
-        if (!gladLoadGLLoader(
-                reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress)))
+        if (!gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress))
         {
             std::cerr
                 << "Failed to initialize GLAD.\n";
 
-            SDL_GL_DestroyContext(m_context);
-            m_context = nullptr;
-
+            shutdown();
             return false;
         }
 
@@ -294,11 +291,7 @@ namespace Pelvis
 
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(
-            GL_ARRAY_BUFFER,
-            0
-        );
-
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
         return true;
@@ -386,10 +379,7 @@ namespace Pelvis
 
         if (m_context)
         {
-            SDL_GL_DestroyContext(
-                m_context
-            );
-
+            SDL_GL_DestroyContext(m_context);
             m_context = nullptr;
         }
 

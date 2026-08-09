@@ -8,6 +8,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
 
+# ============================================================
+# SDL3
+# ============================================================
+
 FetchContent_Declare(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
@@ -16,6 +20,11 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(SDL3)
+
+
+# ============================================================
+# GLAD
+# ============================================================
 
 FetchContent_Declare(
     glad
@@ -26,7 +35,17 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(glad)
 
+
+# ============================================================
+# OpenGL
+# ============================================================
+
 find_package(OpenGL REQUIRED)
+
+
+# ============================================================
+# Pelvis Engine
+# ============================================================
 
 add_executable(PelvisEngine
     Engine/main.cpp
@@ -34,21 +53,43 @@ add_executable(PelvisEngine
     Engine/Renderer/Renderer.cpp
 )
 
-target_link_libraries(PelvisEngine
-    PRIVATE
+
+# ============================================================
+# Include directories
+# ============================================================
+
+target_include_directories(PelvisEngine PRIVATE
+    ${CMAKE_BINARY_DIR}/_deps/glad-build/include
+)
+
+
+# ============================================================
+# Libraries
+# ============================================================
+
+target_link_libraries(PelvisEngine PRIVATE
     SDL3::SDL3
     OpenGL::GL
     glad
 )
 
+
+# ============================================================
+# Compiler warnings
+# ============================================================
+
 if(MSVC)
+
     target_compile_options(PelvisEngine PRIVATE
         /W4
     )
+
 else()
+
     target_compile_options(PelvisEngine PRIVATE
         -Wall
         -Wextra
         -Wpedantic
     )
+
 endif()
