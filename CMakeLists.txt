@@ -31,8 +31,14 @@ target_link_libraries(PelvisEngine
     OpenGL::GL
 )
 
-target_compile_options(PelvisEngine PRIVATE
-    -Wall
-    -Wextra
-    -Wpedantic
-)
+if(MSVC)
+    target_compile_options(PelvisEngine PRIVATE
+        /W4
+    )
+else()
+    target_compile_options(PelvisEngine PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+    )
+endif()
