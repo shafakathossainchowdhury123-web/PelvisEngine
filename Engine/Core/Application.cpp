@@ -90,7 +90,9 @@ namespace Pelvis
 
             m_renderer.beginFrame();
 
-            m_renderer.endFrame();
+m_renderer.drawTriangle();
+
+m_renderer.endFrame();
 
             SDL_Delay(1);
         }

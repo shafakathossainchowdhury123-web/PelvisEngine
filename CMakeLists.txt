@@ -17,6 +17,15 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(SDL3)
 
+FetchContent_Declare(
+    glad
+    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+    GIT_TAG v0.1.36
+    GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(glad)
+
 find_package(OpenGL REQUIRED)
 
 add_executable(PelvisEngine
@@ -29,6 +38,7 @@ target_link_libraries(PelvisEngine
     PRIVATE
     SDL3::SDL3
     OpenGL::GL
+    glad
 )
 
 if(MSVC)

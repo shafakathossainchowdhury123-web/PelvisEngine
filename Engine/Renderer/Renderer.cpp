@@ -1,11 +1,92 @@
 #include "Renderer.h"
 
+#include <glad/glad.h>
 #include <SDL3/SDL_opengl.h>
 
 #include <iostream>
 
 namespace Pelvis
 {
+    namespace
+    {
+        const char* vertexShaderSource = R"(
+            #version 330 core
+
+            layout (location = 0) in vec3 aPosition;
+
+            void main()
+            {
+                gl_Position = vec4(aPosition, 1.0);
+            }
+        )";
+
+        const char* fragmentShaderSource = R"(
+            #version 330 core
+
+            out vec4 FragColor;
+
+            void main()
+            {
+                FragColor = vec4(0.15, 0.65, 1.0, 1.0);
+            }
+        )";
+
+        bool checkShader(unsigned int shader, const char* name)
+        {
+            int success = 0;
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+            if (!success)
+            {
+                char infoLog[512]{};
+                glGetShaderInfoLog(
+                    shader,
+                    sizeof(infoLog),
+                    nullptr,
+                    infoLog
+                );
+
+                std::cerr
+                    << "Shader compilation failed ("
+                    << name
+                    << "):\n"
+                    << infoLog
+                    << '\n';
+
+                return false;
+            }
+
+            return true;
+        }
+
+        bool checkProgram(unsigned int program)
+        {
+            int success = 0;
+            glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+            if (!success)
+            {
+                char infoLog[512]{};
+
+                glGetProgramInfoLog(
+                    program,
+                    sizeof(infoLog),
+                    nullptr,
+                    infoLog
+                );
+
+                std::cerr
+                    << "Shader program linking failed:\n"
+                    << infoLog
+                    << '\n';
+
+                return false;
+            }
+
+            return true;
+        }
+    }
+
     bool Renderer::initialize(SDL_Window* window)
     {
         if (!window)
@@ -56,6 +137,18 @@ namespace Pelvis
             return false;
         }
 
+        if (!gladLoadGLLoader(
+                reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress)))
+        {
+            std::cerr
+                << "Failed to initialize GLAD.\n";
+
+            SDL_GL_DestroyContext(m_context);
+            m_context = nullptr;
+
+            return false;
+        }
+
         SDL_GL_SetSwapInterval(1);
 
         std::cout << "OpenGL renderer initialized.\n";
@@ -70,7 +163,143 @@ namespace Pelvis
                 << '\n';
         }
 
+        if (!createShaders())
+        {
+            shutdown();
+            return false;
+        }
+
+        if (!createTriangleResources())
+        {
+            shutdown();
+            return false;
+        }
+
         m_initialized = true;
+
+        std::cout << "Triangle renderer initialized.\n";
+
+        return true;
+    }
+
+    bool Renderer::createShaders()
+    {
+        unsigned int vertexShader =
+            glCreateShader(GL_VERTEX_SHADER);
+
+        glShaderSource(
+            vertexShader,
+            1,
+            &vertexShaderSource,
+            nullptr
+        );
+
+        glCompileShader(vertexShader);
+
+        if (!checkShader(vertexShader, "vertex"))
+        {
+            glDeleteShader(vertexShader);
+            return false;
+        }
+
+        unsigned int fragmentShader =
+            glCreateShader(GL_FRAGMENT_SHADER);
+
+        glShaderSource(
+            fragmentShader,
+            1,
+            &fragmentShaderSource,
+            nullptr
+        );
+
+        glCompileShader(fragmentShader);
+
+        if (!checkShader(fragmentShader, "fragment"))
+        {
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+
+            return false;
+        }
+
+        m_shaderProgram = glCreateProgram();
+
+        glAttachShader(
+            m_shaderProgram,
+            vertexShader
+        );
+
+        glAttachShader(
+            m_shaderProgram,
+            fragmentShader
+        );
+
+        glLinkProgram(m_shaderProgram);
+
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+
+        if (!checkProgram(m_shaderProgram))
+        {
+            glDeleteProgram(m_shaderProgram);
+            m_shaderProgram = 0;
+
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Renderer::createTriangleResources()
+    {
+        const float vertices[] =
+        {
+             0.0f,  0.65f, 0.0f,
+            -0.65f, -0.55f, 0.0f,
+             0.65f, -0.55f, 0.0f
+        };
+
+        glGenVertexArrays(
+            1,
+            &m_vertexArray
+        );
+
+        glGenBuffers(
+            1,
+            &m_vertexBuffer
+        );
+
+        glBindVertexArray(m_vertexArray);
+
+        glBindBuffer(
+            GL_ARRAY_BUFFER,
+            m_vertexBuffer
+        );
+
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            sizeof(vertices),
+            vertices,
+            GL_STATIC_DRAW
+        );
+
+        glVertexAttribPointer(
+            0,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            3 * sizeof(float),
+            nullptr
+        );
+
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(
+            GL_ARRAY_BUFFER,
+            0
+        );
+
+        glBindVertexArray(0);
 
         return true;
     }
@@ -92,6 +321,28 @@ namespace Pelvis
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
+    void Renderer::drawTriangle()
+    {
+        if (!m_initialized)
+        {
+            return;
+        }
+
+        glUseProgram(m_shaderProgram);
+
+        glBindVertexArray(m_vertexArray);
+
+        glDrawArrays(
+            GL_TRIANGLES,
+            0,
+            3
+        );
+
+        glBindVertexArray(0);
+
+        glUseProgram(0);
+    }
+
     void Renderer::endFrame()
     {
         if (!m_initialized)
@@ -104,15 +355,48 @@ namespace Pelvis
 
     void Renderer::shutdown()
     {
+        if (m_vertexBuffer)
+        {
+            glDeleteBuffers(
+                1,
+                &m_vertexBuffer
+            );
+
+            m_vertexBuffer = 0;
+        }
+
+        if (m_vertexArray)
+        {
+            glDeleteVertexArrays(
+                1,
+                &m_vertexArray
+            );
+
+            m_vertexArray = 0;
+        }
+
+        if (m_shaderProgram)
+        {
+            glDeleteProgram(
+                m_shaderProgram
+            );
+
+            m_shaderProgram = 0;
+        }
+
         if (m_context)
         {
-            SDL_GL_DestroyContext(m_context);
+            SDL_GL_DestroyContext(
+                m_context
+            );
+
             m_context = nullptr;
         }
 
         m_window = nullptr;
         m_initialized = false;
 
-        std::cout << "OpenGL renderer shutdown.\n";
+        std::cout
+            << "OpenGL renderer shutdown.\n";
     }
 }
