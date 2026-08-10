@@ -4,7 +4,7 @@
 
 #include "../Renderer/Renderer.h"
 #include "../Camera/Camera.h"
-#include "../Player/PlayerController.h"
+#include "../Player/Player.h"
 
 namespace Pelvis
 {
@@ -19,6 +19,8 @@ namespace Pelvis
         void shutdown();
 
     private:
+
+    Player m_player;
         void processInput(float deltaTime);
 
         bool m_running = false;
@@ -26,8 +28,6 @@ namespace Pelvis
         SDL_Window* m_window = nullptr;
 
         Renderer m_renderer;
-        Camera m_camera;
-        PlayerController m_playerController;
     };
 }
 

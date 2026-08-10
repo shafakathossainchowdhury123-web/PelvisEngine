@@ -30,6 +30,7 @@ bool Application::initialize()
     std::cout << "====================================\n";
 
     Input::initialize();
+    m_player.initialize();
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
     {
@@ -149,7 +150,7 @@ void Application::processInput(float deltaTime)
     // CAMERA MOVEMENT
     // --------------------------------------------------------
 
-    m_camera.move(
+    m_player.getCamera().move(
         forward,
         right,
         up,
@@ -169,7 +170,7 @@ void Application::processInput(float deltaTime)
     const float mouseY =
         Input::getMouseDeltaY() * mouseSensitivity;
 
-    m_camera.rotate(
+    m_player.getCamera().rotate(
         mouseX,
         -mouseY
     );
@@ -346,6 +347,7 @@ int Application::run()
         // ----------------------------------------------------
 
         processInput(deltaTime);
+        m_player.update(deltaTime);
 
 
         // ----------------------------------------------------
@@ -354,7 +356,14 @@ int Application::run()
 
         m_renderer.beginFrame();
 
-        m_renderer.drawTriangle();
+        const float worldTime =
+            std::chrono::duration<float>(
+                currentTime.time_since_epoch()
+            ).count();
+
+        m_renderer.drawWorld(
+            m_player.getCamera()
+        );
 
         m_renderer.endFrame();
 

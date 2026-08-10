@@ -32,6 +32,8 @@ add_executable(PelvisEngine
     Engine/main.cpp
     Engine/Core/Application.cpp
     Engine/Renderer/Renderer.cpp
+    Engine/Renderer/Mesh.cpp
+    Engine/Graphics/Model.cpp
     Engine/Camera/Camera.cpp
     Engine/Player/PlayerController.cpp
     Engine/Player/Player.cpp
@@ -77,3 +79,8 @@ else()
 
 endif()
 
+
+
+find_package(assimp REQUIRED)
+
+target_link_libraries(PelvisEngine PRIVATE assimp::assimp)
