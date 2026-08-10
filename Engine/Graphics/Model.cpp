@@ -1,11 +1,11 @@
 #include "Model.h"
-#include "../Renderer/Mesh.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 #include <iostream>
+#include <vector>
 
 namespace Pelvis
 {
@@ -20,9 +20,7 @@ Model::~Model()
     destroy();
 }
 
-bool Model::load(
-    const std::string& path
-)
+bool Model::load(const std::string& path)
 {
     destroy();
 
@@ -45,8 +43,7 @@ bool Model::load(
     {
         std::cerr
             << "ModelLoader: failed to load model:\n"
-            << path
-            << '\n'
+            << path << '\n'
             << "Assimp: "
             << importer.GetErrorString()
             << '\n';
@@ -56,15 +53,13 @@ bool Model::load(
 
     std::cout
         << "ModelLoader: loading "
-        << path
-        << '\n';
+        << path << '\n';
 
     for (unsigned int i = 0;
          i < scene->mNumMeshes;
          ++i)
     {
-        aiMesh* sourceMesh =
-            scene->mMeshes[i];
+        aiMesh* sourceMesh = scene->mMeshes[i];
 
         if (!sourceMesh ||
             sourceMesh->mNumVertices == 0)
@@ -73,10 +68,6 @@ bool Model::load(
         }
 
         std::vector<float> vertices;
-
-        vertices.reserve(
-            sourceMesh->mNumFaces * 9
-        );
 
         for (unsigned int faceIndex = 0;
              faceIndex < sourceMesh->mNumFaces;
@@ -89,7 +80,7 @@ bool Model::load(
                  index < face.mNumIndices;
                  ++index)
             {
-                const unsigned int vertexIndex =
+                unsigned int vertexIndex =
                     face.mIndices[index];
 
                 const aiVector3D& vertex =
@@ -104,38 +95,20 @@ bool Model::load(
         if (vertices.empty())
             continue;
 
-        std::vector<Vertex> meshVertices;
-        meshVertices.reserve(vertices.size() / 3);
+        auto mesh = std::make_unique<Mesh>();
 
-        for (std::size_t vertexIndex = 0;
-             vertexIndex < vertices.size();
-             vertexIndex += 3)
-        {
-            Vertex vertex;
-
-            vertex.x = vertices[vertexIndex];
-            vertex.y = vertices[vertexIndex + 1];
-            vertex.z = vertices[vertexIndex + 2];
-
-            meshVertices.push_back(vertex);
-        }
-
-        auto mesh =
-            std::make_unique<Mesh>();
-
-        if (!mesh->create(meshVertices))
+        if (!mesh->create(
+                vertices.data(),
+                static_cast<unsigned int>(vertices.size() / 3)))
         {
             std::cerr
                 << "ModelLoader: failed to create GPU mesh.\n";
 
             destroy();
-
             return false;
         }
 
-        m_meshes.push_back(
-            std::move(mesh)
-        );
+        m_meshes.push_back(std::move(mesh));
     }
 
     if (m_meshes.empty())
@@ -144,7 +117,6 @@ bool Model::load(
             << "ModelLoader: model contains no usable meshes.\n";
 
         destroy();
-
         return false;
     }
 
@@ -174,9 +146,7 @@ void Model::draw() const
 void Model::destroy()
 {
     m_meshes.clear();
-
     m_path.clear();
-
     m_loaded = false;
 }
 

@@ -3,7 +3,7 @@
 namespace Pelvis
 {
 
-static EntityID nextEntityID = 1;
+static std::uint32_t nextEntityID = 1;
 
 Entity::Entity()
     : m_id(nextEntityID++)
@@ -17,15 +17,7 @@ Entity::Entity(const std::string& name)
 {
 }
 
-Entity::Entity(EntityID id, const std::string& name)
-    : m_id(id)
-    , m_name(name)
-{
-    if (id >= nextEntityID)
-        nextEntityID = id + 1;
-}
-
-EntityID Entity::getID() const
+std::uint32_t Entity::getID() const
 {
     return m_id;
 }

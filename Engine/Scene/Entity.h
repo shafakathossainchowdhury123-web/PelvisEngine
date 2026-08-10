@@ -8,17 +8,14 @@
 namespace Pelvis
 {
 
-using EntityID = std::uint32_t;
-
 class Entity
 {
 public:
 
     Entity();
     explicit Entity(const std::string& name);
-    Entity(EntityID id, const std::string& name);
 
-    EntityID getID() const;
+    std::uint32_t getID() const;
 
     const std::string& getName() const;
     void setName(const std::string& name);
@@ -28,7 +25,7 @@ public:
 
 private:
 
-    EntityID m_id;
+    std::uint32_t m_id;
     std::string m_name;
     Transform m_transform;
 };

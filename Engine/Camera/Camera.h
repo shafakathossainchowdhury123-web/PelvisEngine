@@ -1,56 +1,68 @@
 #pragma once
 
+#include <glm/mat4x4.hpp>
+
 namespace Pelvis
 {
-    class Camera
-    {
-    public:
-        Camera();
 
-        void setPosition(
-            float x,
-            float y,
-            float z
-        );
+class Camera
+{
+public:
 
-        void setRotation(
-            float yaw,
-            float pitch
-        );
+    Camera();
 
-        void move(
-            float forward,
-            float right,
-            float up,
-            float deltaTime
-        );
+    void setPosition(
+        float x,
+        float y,
+        float z
+    );
 
-        void rotate(
-            float yawOffset,
-            float pitchOffset
-        );
+    void setRotation(
+        float yaw,
+        float pitch
+    );
 
-        float getX() const;
-        float getY() const;
-        float getZ() const;
+    void move(
+        float forward,
+        float right,
+        float up,
+        float deltaTime
+    );
 
-        float getYaw() const;
-        float getPitch() const;
+    void rotate(
+        float yawOffset,
+        float pitchOffset
+    );
 
-        float getFOV() const;
-        float getNearPlane() const;
-        float getFarPlane() const;
+    float getX() const;
+    float getY() const;
+    float getZ() const;
 
-    private:
-        float m_x;
-        float m_y;
-        float m_z;
+    float getYaw() const;
+    float getPitch() const;
 
-        float m_yaw;
-        float m_pitch;
+    float getFOV() const;
+    float getNearPlane() const;
+    float getFarPlane() const;
 
-        float m_fov;
-        float m_nearPlane;
-        float m_farPlane;
-    };
+    glm::mat4 getViewMatrix() const;
+
+    glm::mat4 getProjectionMatrix(
+        float aspectRatio
+    ) const;
+
+private:
+
+    float m_x;
+    float m_y;
+    float m_z;
+
+    float m_yaw;
+    float m_pitch;
+
+    float m_fov;
+    float m_nearPlane;
+    float m_farPlane;
+};
+
 }

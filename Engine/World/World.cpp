@@ -1,5 +1,7 @@
 #include "World.h"
 
+#include <algorithm>
+
 namespace Pelvis
 {
 
@@ -8,17 +10,14 @@ World::World()
 {
 }
 
-Entity* World::createEntity(
-    const char* name
-)
+Entity* World::createEntity(const char* name)
 {
     const EntityID id = m_nextEntityID++;
 
-    auto entity =
-        std::make_unique<Entity>(
-            id,
-            name
-        );
+    auto entity = std::make_unique<Entity>(
+        id,
+        name ? name : "Entity"
+    );
 
     Entity* result = entity.get();
 
@@ -31,24 +30,29 @@ Entity* World::createEntity(
 
 void World::destroyEntity(EntityID id)
 {
-    for (auto it = m_entities.begin();
-         it != m_entities.end();
-         ++it)
-    {
-        if ((*it)->getID() == id)
-        {
-            m_entities.erase(it);
-            return;
-        }
-    }
+    m_entities.erase(
+        std::remove_if(
+            m_entities.begin(),
+            m_entities.end(),
+            [id](const std::unique_ptr<Entity>& entity)
+            {
+                return entity &&
+                       entity->getID() == id;
+            }
+        ),
+        m_entities.end()
+    );
 }
 
 Entity* World::getEntity(EntityID id)
 {
     for (auto& entity : m_entities)
     {
-        if (entity->getID() == id)
+        if (entity &&
+            entity->getID() == id)
+        {
             return entity.get();
+        }
     }
 
     return nullptr;
@@ -56,16 +60,12 @@ Entity* World::getEntity(EntityID id)
 
 void World::update(float deltaTime)
 {
-    // Entity gameplay/component updates
-    // will be added here later.
-
     (void)deltaTime;
 }
 
 void World::clear()
 {
     m_entities.clear();
-
     m_nextEntityID = 1;
 }
 

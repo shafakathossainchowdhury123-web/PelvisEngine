@@ -7,6 +7,7 @@ namespace Pelvis
 {
 
 class Camera;
+class Entity;
 
 class Renderer
 {
@@ -17,9 +18,13 @@ public:
     bool initialize(SDL_Window* window);
 
     void beginFrame();
+
     void drawCube(const Camera& camera);
+    void drawCube(const Camera& camera, const Entity& entity);
+
     void drawGrid(const Camera& camera);
     void drawWorld(const Camera& camera);
+
     void endFrame();
 
     void shutdown();

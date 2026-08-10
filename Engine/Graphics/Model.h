@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Renderer/Mesh.h"
+#include "Mesh.h"
 
 #include <memory>
 #include <string>
@@ -16,9 +16,7 @@ public:
     Model();
     ~Model();
 
-    bool load(
-        const std::string& path
-    );
+    bool load(const std::string& path);
 
     void draw() const;
 

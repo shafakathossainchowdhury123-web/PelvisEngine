@@ -1,12 +1,16 @@
 #include "Renderer.h"
 
 #include "../Camera/Camera.h"
+#include "../World/Entity.h"
+#include "../World/Transform.h"
 
 #include <iostream>
 #include <cmath>
 
 namespace Pelvis
 {
+
+static constexpr float PI = 3.14159265359f;
 
 static const char* vertexShaderSource = R"(
 #version 330 core
@@ -18,7 +22,10 @@ uniform mat4 uViewProjection;
 
 void main()
 {
-    gl_Position = uViewProjection * uModel * vec4(aPos, 1.0);
+    gl_Position =
+        uViewProjection *
+        uModel *
+        vec4(aPos, 1.0);
 }
 )";
 
@@ -33,6 +40,17 @@ void main()
 }
 )";
 
+static void makeIdentity(float* m)
+{
+    for (int i = 0; i < 16; ++i)
+        m[i] = 0.0f;
+
+    m[0] = 1.0f;
+    m[5] = 1.0f;
+    m[10] = 1.0f;
+    m[15] = 1.0f;
+}
+
 static void makePerspective(
     float* m,
     float fov,
@@ -45,7 +63,7 @@ static void makePerspective(
         m[i] = 0.0f;
 
     const float radians =
-        fov * 3.14159265359f / 180.0f;
+        fov * PI / 180.0f;
 
     const float f =
         1.0f / std::tan(radians * 0.5f);
@@ -70,14 +88,10 @@ static void makeView(
 )
 {
     const float yaw =
-        camera.getYaw() *
-        3.14159265359f /
-        180.0f;
+        camera.getYaw() * PI / 180.0f;
 
     const float pitch =
-        camera.getPitch() *
-        3.14159265359f /
-        180.0f;
+        camera.getPitch() * PI / 180.0f;
 
     const float cy = std::cos(yaw);
     const float sy = std::sin(yaw);
@@ -85,14 +99,17 @@ static void makeView(
     const float cp = std::cos(pitch);
     const float sp = std::sin(pitch);
 
+    // Forward vector.
     const float fx = cy * cp;
     const float fy = sp;
     const float fz = sy * cp;
 
-    float rx = -sy;
-    float ry = 0.0f;
-    float rz = cy;
+    // Right vector.
+    const float rx = -sy;
+    const float ry = 0.0f;
+    const float rz = cy;
 
+    // Up = right x forward.
     const float ux =
         ry * fz - rz * fy;
 
@@ -148,15 +165,92 @@ static void multiplyMatrix(
         for (int row = 0; row < 4; ++row)
         {
             temp[column * 4 + row] =
-                a[0 * 4 + row] * b[column * 4 + 0] +
-                a[1 * 4 + row] * b[column * 4 + 1] +
-                a[2 * 4 + row] * b[column * 4 + 2] +
-                a[3 * 4 + row] * b[column * 4 + 3];
+                a[0 * 4 + row] *
+                    b[column * 4 + 0] +
+                a[1 * 4 + row] *
+                    b[column * 4 + 1] +
+                a[2 * 4 + row] *
+                    b[column * 4 + 2] +
+                a[3 * 4 + row] *
+                    b[column * 4 + 3];
         }
     }
 
     for (int i = 0; i < 16; ++i)
         result[i] = temp[i];
+}
+
+static void makeModelMatrix(
+    float* m,
+    const Transform& transform
+)
+{
+    const float rx =
+        transform.getRotationX() * PI / 180.0f;
+
+    const float ry =
+        transform.getRotationY() * PI / 180.0f;
+
+    const float rz =
+        transform.getRotationZ() * PI / 180.0f;
+
+    const float cx = std::cos(rx);
+    const float sx = std::sin(rx);
+
+    const float cy = std::cos(ry);
+    const float sy = std::sin(ry);
+
+    const float cz = std::cos(rz);
+    const float sz = std::sin(rz);
+
+    const float scaleX = transform.getScaleX();
+    const float scaleY = transform.getScaleY();
+    const float scaleZ = transform.getScaleZ();
+
+    // Rz * Ry * Rx
+    m[0] =
+        cz * cy * scaleX;
+
+    m[1] =
+        sz * cy * scaleX;
+
+    m[2] =
+        -sy * scaleX;
+
+    m[3] = 0.0f;
+
+    m[4] =
+        (cz * sy * sx - sz * cx) *
+        scaleY;
+
+    m[5] =
+        (sz * sy * sx + cz * cx) *
+        scaleY;
+
+    m[6] =
+        cy * sx *
+        scaleY;
+
+    m[7] = 0.0f;
+
+    m[8] =
+        (cz * sy * cx + sz * sx) *
+        scaleZ;
+
+    m[9] =
+        (sz * sy * cx - cz * sx) *
+        scaleZ;
+
+    m[10] =
+        cy * cx *
+        scaleZ;
+
+    m[11] = 0.0f;
+
+    m[12] = transform.getPositionX();
+    m[13] = transform.getPositionY();
+    m[14] = transform.getPositionZ();
+    m[15] = 1.0f;
 }
 
 bool Renderer::initialize(SDL_Window* window)
@@ -198,19 +292,31 @@ bool Renderer::initialize(SDL_Window* window)
         m_window,
         m_context))
     {
+        std::cerr
+            << "Failed to make OpenGL context current: "
+            << SDL_GetError()
+            << '\n';
+
         return false;
     }
 
     glewExperimental = GL_TRUE;
 
-    if (glewInit() != GLEW_OK)
+    const GLenum glewResult = glewInit();
+
+    if (glewResult != GLEW_OK)
     {
         std::cerr
-            << "GLEW initialization failed.\n";
+            << "GLEW initialization failed: "
+            << reinterpret_cast<const char*>(
+                glewGetErrorString(glewResult))
+            << '\n';
 
         return false;
     }
 
+    // GLEW can generate a harmless GL_INVALID_ENUM
+    // while initializing a core profile context.
     glGetError();
 
     std::cout
@@ -232,7 +338,6 @@ bool Renderer::initialize(SDL_Window* window)
         return false;
 
     glEnable(GL_DEPTH_TEST);
-
     glDepthFunc(GL_LESS);
 
     SDL_GL_SetSwapInterval(1);
@@ -269,7 +374,7 @@ bool Renderer::createShaders()
 
     if (!success)
     {
-        char log[1024];
+        char log[1024] = {};
 
         glGetShaderInfoLog(
             vertexShader,
@@ -279,9 +384,11 @@ bool Renderer::createShaders()
         );
 
         std::cerr
-            << "Vertex shader failed:\n"
+            << "Vertex shader compilation failed:\n"
             << log
             << '\n';
+
+        glDeleteShader(vertexShader);
 
         return false;
     }
@@ -306,7 +413,7 @@ bool Renderer::createShaders()
 
     if (!success)
     {
-        char log[1024];
+        char log[1024] = {};
 
         glGetShaderInfoLog(
             fragmentShader,
@@ -316,9 +423,12 @@ bool Renderer::createShaders()
         );
 
         std::cerr
-            << "Fragment shader failed:\n"
+            << "Fragment shader compilation failed:\n"
             << log
             << '\n';
+
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
 
         return false;
     }
@@ -351,8 +461,22 @@ bool Renderer::createShaders()
 
     if (!success)
     {
+        char log[1024] = {};
+
+        glGetProgramInfoLog(
+            m_shaderProgram,
+            sizeof(log),
+            nullptr,
+            log
+        );
+
         std::cerr
-            << "Shader linking failed.\n";
+            << "Shader linking failed:\n"
+            << log
+            << '\n';
+
+        glDeleteProgram(m_shaderProgram);
+        m_shaderProgram = 0;
 
         return false;
     }
@@ -468,6 +592,7 @@ bool Renderer::createCubeResources()
 
     glEnableVertexAttribArray(0);
 
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     return true;
@@ -477,6 +602,35 @@ void Renderer::beginFrame()
 {
     if (!m_initialized)
         return;
+
+    glViewport(
+        0,
+        0,
+        1280,
+        720
+    );
+
+    int width = 1280;
+    int height = 720;
+
+    SDL_GetWindowSize(
+        m_window,
+        &width,
+        &height
+    );
+
+    if (width <= 0)
+        width = 1280;
+
+    if (height <= 0)
+        height = 720;
+
+    glViewport(
+        0,
+        0,
+        width,
+        height
+    );
 
     glClearColor(
         0.05f,
@@ -513,6 +667,7 @@ void Renderer::drawCube(
     float projection[16];
     float view[16];
     float viewProjection[16];
+    float model[16];
 
     makePerspective(
         projection,
@@ -534,13 +689,88 @@ void Renderer::drawCube(
         view
     );
 
-    float model[16] =
-    {
-        1,0,0,0,
-        0,1,0,0,
-        0,0,1,0,
-        0,0,0,1
-    };
+    makeIdentity(model);
+
+    glUseProgram(
+        m_shaderProgram
+    );
+
+    glUniformMatrix4fv(
+        m_viewProjectionLocation,
+        1,
+        GL_FALSE,
+        viewProjection
+    );
+
+    glUniformMatrix4fv(
+        m_modelLocation,
+        1,
+        GL_FALSE,
+        model
+    );
+
+    glBindVertexArray(
+        m_vertexArray
+    );
+
+    glDrawArrays(
+        GL_TRIANGLES,
+        0,
+        36
+    );
+
+    glBindVertexArray(0);
+}
+
+void Renderer::drawCube(
+    const Camera& camera,
+    const Entity& entity
+)
+{
+    if (!m_initialized)
+        return;
+
+    int width = 1280;
+    int height = 720;
+
+    SDL_GetWindowSize(
+        m_window,
+        &width,
+        &height
+    );
+
+    if (height <= 0)
+        height = 1;
+
+    float projection[16];
+    float view[16];
+    float viewProjection[16];
+    float model[16];
+
+    makePerspective(
+        projection,
+        camera.getFOV(),
+        static_cast<float>(width) /
+            static_cast<float>(height),
+        camera.getNearPlane(),
+        camera.getFarPlane()
+    );
+
+    makeView(
+        view,
+        camera
+    );
+
+    multiplyMatrix(
+        viewProjection,
+        projection,
+        view
+    );
+
+    makeModelMatrix(
+        model,
+        entity.getTransform()
+    );
 
     glUseProgram(
         m_shaderProgram
@@ -616,7 +846,9 @@ void Renderer::drawGrid(
         view
     );
 
-    glUseProgram(m_shaderProgram);
+    glUseProgram(
+        m_shaderProgram
+    );
 
     glUniformMatrix4fv(
         m_viewProjectionLocation,
@@ -625,29 +857,33 @@ void Renderer::drawGrid(
         viewProjection
     );
 
-    float vertices[6 * 3 * 41];
+    float vertices[492];
     int vertexCount = 0;
 
-    // Grid lines parallel to X.
     for (int z = -20; z <= 20; ++z)
     {
         vertices[vertexCount++] = -20.0f;
         vertices[vertexCount++] = 0.0f;
-        vertices[vertexCount++] = static_cast<float>(z);
+        vertices[vertexCount++] =
+            static_cast<float>(z);
 
         vertices[vertexCount++] = 20.0f;
         vertices[vertexCount++] = 0.0f;
-        vertices[vertexCount++] = static_cast<float>(z);
+        vertices[vertexCount++] =
+            static_cast<float>(z);
     }
 
-    // Grid lines parallel to Z.
     for (int x = -20; x <= 20; ++x)
     {
-        vertices[vertexCount++] = static_cast<float>(x);
+        vertices[vertexCount++] =
+            static_cast<float>(x);
+
         vertices[vertexCount++] = 0.0f;
         vertices[vertexCount++] = -20.0f;
 
-        vertices[vertexCount++] = static_cast<float>(x);
+        vertices[vertexCount++] =
+            static_cast<float>(x);
+
         vertices[vertexCount++] = 0.0f;
         vertices[vertexCount++] = 20.0f;
     }
@@ -655,10 +891,19 @@ void Renderer::drawGrid(
     GLuint gridVAO = 0;
     GLuint gridVBO = 0;
 
-    glGenVertexArrays(1, &gridVAO);
-    glGenBuffers(1, &gridVBO);
+    glGenVertexArrays(
+        1,
+        &gridVAO
+    );
 
-    glBindVertexArray(gridVAO);
+    glGenBuffers(
+        1,
+        &gridVBO
+    );
+
+    glBindVertexArray(
+        gridVAO
+    );
 
     glBindBuffer(
         GL_ARRAY_BUFFER,
@@ -683,13 +928,9 @@ void Renderer::drawGrid(
 
     glEnableVertexAttribArray(0);
 
-    float model[16] =
-    {
-        1,0,0,0,
-        0,1,0,0,
-        0,0,1,0,
-        0,0,0,1
-    };
+    float model[16];
+
+    makeIdentity(model);
 
     glUniformMatrix4fv(
         m_modelLocation,
@@ -708,8 +949,15 @@ void Renderer::drawGrid(
 
     glBindVertexArray(0);
 
-    glDeleteBuffers(1, &gridVBO);
-    glDeleteVertexArrays(1, &gridVAO);
+    glDeleteBuffers(
+        1,
+        &gridVBO
+    );
+
+    glDeleteVertexArrays(
+        1,
+        &gridVAO
+    );
 }
 
 void Renderer::drawWorld(
