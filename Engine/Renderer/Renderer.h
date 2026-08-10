@@ -1,34 +1,37 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <GL/glew.h>
 
 namespace Pelvis
 {
-    class Renderer
-    {
-    public:
-        Renderer() = default;
-        ~Renderer() = default;
 
-        bool initialize(SDL_Window* window);
+class Renderer
+{
+public:
+    Renderer() = default;
+    ~Renderer() = default;
 
-        void beginFrame();
-        void drawTriangle();
-        void endFrame();
+    bool initialize(SDL_Window* window);
 
-        void shutdown();
+    void beginFrame();
+    void drawTriangle();
+    void endFrame();
 
-    private:
-        bool createTriangleResources();
-        bool createShaders();
+    void shutdown();
 
-        SDL_Window* m_window = nullptr;
-        SDL_GLContext m_context = nullptr;
+private:
+    bool createTriangleResources();
+    bool createShaders();
 
-        unsigned int m_shaderProgram = 0;
-        unsigned int m_vertexArray = 0;
-        unsigned int m_vertexBuffer = 0;
+    SDL_Window* m_window = nullptr;
+    SDL_GLContext m_context = nullptr;
 
-        bool m_initialized = false;
-    };
+    GLuint m_shaderProgram = 0;
+    GLuint m_vertexArray = 0;
+    GLuint m_vertexBuffer = 0;
+
+    bool m_initialized = false;
+};
+
 }
