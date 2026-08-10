@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(PelvisEngine VERSION 0.1.0 LANGUAGES CXX)
+project(PelvisEngine VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -21,61 +21,44 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(SDL3)
 
-
 # ============================================================
-# GLAD
-# ============================================================
-
-FetchContent_Declare(
-    glad
-    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-    GIT_TAG v0.1.36
-    GIT_SHALLOW TRUE
-)
-
-FetchContent_MakeAvailable(glad)
-
-
-# ============================================================
-# OpenGL
+# OpenGL 
 # ============================================================
 
 find_package(OpenGL REQUIRED)
-
-
-# ============================================================
-# Pelvis Engine
-# ============================================================
-
+find_package(GLEW REQUIRED)
+# ============================================================ 
 add_executable(PelvisEngine
     Engine/main.cpp
     Engine/Core/Application.cpp
     Engine/Renderer/Renderer.cpp
-)
-
-
+    Engine/Camera/Camera.cpp
+    Engine/Player/PlayerController.cpp
+    Engine/Player/Player.cpp
+    Engine/World/Transform.cpp
+    Engine/World/Entity.cpp
+    Engine/World/World.cpp
+    Engine/Gameplay/ActionSystem.cpp
+    Engine/Gameplay/ActionMap.cpp
+    Engine/Gameplay/MeleeWeapon.cpp
+    Engine/Gameplay/Firearm.cpp
+    Engine/Gameplay/Inventory.cpp
+    Engine/Input/Input.cpp
+    Engine/Input/ActionMap.cpp
+) 
 # ============================================================
-# Include directories
-# ============================================================
-
-target_include_directories(PelvisEngine PRIVATE
-    ${CMAKE_BINARY_DIR}/_deps/glad-build/include
-)
+target_include_directories(PelvisEngine
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/Engine)
 
 
-# ============================================================
-# Libraries
-# ============================================================
-
-target_link_libraries(PelvisEngine PRIVATE
+ target_link_libraries(PelvisEngine PRIVATE
     SDL3::SDL3
     OpenGL::GL
-    glad
+    GLEW::GLEW
 )
-
-
 # ============================================================
-# Compiler warnings
+# Warnings
 # ============================================================
 
 if(MSVC)
@@ -93,3 +76,4 @@ else()
     )
 
 endif()
+
