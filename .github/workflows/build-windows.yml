@@ -15,8 +15,22 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v6
 
+      - name: Install vcpkg dependencies
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git "$env:RUNNER_TEMP\vcpkg"
+          & "$env:RUNNER_TEMP\vcpkg\bootstrap-vcpkg.bat"
+
+          & "$env:RUNNER_TEMP\vcpkg\vcpkg.exe" install `
+            glew:x64-windows
+
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        shell: pwsh
+        run: |
+          cmake -S . -B build `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            "-DCMAKE_TOOLCHAIN_FILE=$env:RUNNER_TEMP\vcpkg\scripts\buildsystems\vcpkg.cmake"
 
       - name: Build Pelvis Engine
         run: cmake --build build --config Release -j 2
