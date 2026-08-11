@@ -21,6 +21,7 @@ public:
     void destroyEntity(EntityID id);
 
     Entity* getEntity(EntityID id);
+    const Entity* getEntity(EntityID id) const;
 
     void update(float deltaTime);
 

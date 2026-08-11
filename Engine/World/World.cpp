@@ -58,6 +58,20 @@ Entity* World::getEntity(EntityID id)
     return nullptr;
 }
 
+const Entity* World::getEntity(EntityID id) const
+{
+    for (const auto& entity : m_entities)
+    {
+        if (entity &&
+            entity->getID() == id)
+        {
+            return entity.get();
+        }
+    }
+
+    return nullptr;
+}
+
 void World::update(float deltaTime)
 {
     (void)deltaTime;
