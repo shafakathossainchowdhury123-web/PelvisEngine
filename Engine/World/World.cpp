@@ -72,6 +72,11 @@ const Entity* World::getEntity(EntityID id) const
     return nullptr;
 }
 
+const std::vector<std::unique_ptr<Entity>>& World::getEntities() const
+{
+    return m_entities;
+}
+
 void World::update(float deltaTime)
 {
     (void)deltaTime;

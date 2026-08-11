@@ -23,6 +23,8 @@ public:
     Entity* getEntity(EntityID id);
     const Entity* getEntity(EntityID id) const;
 
+    const std::vector<std::unique_ptr<Entity>>& getEntities() const;
+
     void update(float deltaTime);
 
     void clear();
