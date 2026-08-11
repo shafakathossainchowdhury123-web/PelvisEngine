@@ -1,9 +1,18 @@
+# Build output
 build/
-.vscode/
-.idea/
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.a
+out/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Visual Studio
+.vs/
+*.vcxproj.user
+
+# OS
+.DS_Store
+Thumbs.db

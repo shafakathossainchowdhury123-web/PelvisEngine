@@ -34,6 +34,7 @@ add_executable(PelvisEngine
     Engine/Renderer/Renderer.cpp
     Engine/Graphics/Model.cpp
     Engine/Graphics/Mesh.cpp
+    Engine/Assets/AssetManager.cpp
     Engine/Camera/Camera.cpp
     Engine/Player/PlayerController.cpp
     Engine/Player/Player.cpp
