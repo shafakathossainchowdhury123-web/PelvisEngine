@@ -2,6 +2,7 @@
 
 #include "../Camera/Camera.h"
 #include "../World/Entity.h"
+#include "../World/World.h"
 #include "../World/Transform.h"
 
 #include <iostream>
@@ -966,6 +967,32 @@ void Renderer::drawWorld(
 {
     drawGrid(camera);
     drawCube(camera);
+}
+
+void Renderer::drawWorld(
+    const Camera& camera,
+    const World& world
+)
+{
+    drawGrid(camera);
+
+    for (std::size_t i = 0; i < world.getEntityCount(); ++i)
+    {
+        // Entities are retrieved by ID, so use IDs starting at 1.
+        const EntityID id =
+            static_cast<EntityID>(i + 1);
+
+        const Entity* entity =
+            world.getEntity(id);
+
+        if (entity)
+        {
+            drawCube(
+                camera,
+                *entity
+            );
+        }
+    }
 }
 
 void Renderer::endFrame()

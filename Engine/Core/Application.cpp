@@ -30,7 +30,63 @@ bool Application::initialize()
     std::cout << "====================================\n";
 
     Input::initialize();
+
     m_player.initialize();
+
+    // --------------------------------------------------------
+    // CREATE WORLD
+    // --------------------------------------------------------
+
+    m_cube1 = m_world.createEntity("Cube_1");
+    m_cube1->getTransform().setPosition(
+        0.0f,
+        1.0f,
+        0.0f
+    );
+
+    m_cube2 = m_world.createEntity("Cube_2");
+    m_cube2->getTransform().setPosition(
+        3.0f,
+        1.0f,
+        0.0f
+    );
+    m_cube2->getTransform().setRotation(
+        0.0f,
+        35.0f,
+        0.0f
+    );
+    m_cube2->getTransform().setScale(
+        0.75f,
+        0.75f,
+        0.75f
+    );
+
+    m_cube3 = m_world.createEntity("Cube_3");
+    m_cube3->getTransform().setPosition(
+        -3.0f,
+        1.0f,
+        0.0f
+    );
+    m_cube3->getTransform().setRotation(
+        0.0f,
+        -35.0f,
+        0.0f
+    );
+    m_cube3->getTransform().setScale(
+        1.5f,
+        1.5f,
+        1.5f
+    );
+
+    std::cout
+        << "World initialized with "
+        << m_world.getEntityCount()
+        << " entities.\n";
+
+
+    // --------------------------------------------------------
+    // SDL
+    // --------------------------------------------------------
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
     {
@@ -45,6 +101,11 @@ bool Application::initialize()
         m_running = true;
         return true;
     }
+
+
+    // --------------------------------------------------------
+    // WINDOW
+    // --------------------------------------------------------
 
     m_window = SDL_CreateWindow(
         "Pelvis Engine 0.5",
@@ -69,19 +130,27 @@ bool Application::initialize()
         return true;
     }
 
+
+    // --------------------------------------------------------
+    // RENDERER
+    // --------------------------------------------------------
+
     if (!m_renderer.initialize(m_window))
     {
         std::cerr
             << "Renderer initialization failed.\n";
 
         SDL_DestroyWindow(m_window);
+
         m_window = nullptr;
 
         SDL_Quit();
 
         m_running = true;
+
         return true;
     }
+
 
     m_running = true;
 
@@ -96,7 +165,7 @@ bool Application::initialize()
 
 
 // ============================================================
-// INPUT PROCESSING
+// INPUT
 // ============================================================
 
 void Application::processInput(float deltaTime)
@@ -105,10 +174,6 @@ void Application::processInput(float deltaTime)
     float right = 0.0f;
     float up = 0.0f;
 
-
-    // --------------------------------------------------------
-    // MOVEMENT
-    // --------------------------------------------------------
 
     if (Input::isKeyDown(Key::W))
         forward += 1.0f;
@@ -123,20 +188,12 @@ void Application::processInput(float deltaTime)
         right -= 1.0f;
 
 
-    // --------------------------------------------------------
-    // VERTICAL MOVEMENT
-    // --------------------------------------------------------
-
     if (Input::isKeyDown(Key::Space))
         up += 1.0f;
 
     if (Input::isKeyDown(Key::LeftControl))
         up -= 1.0f;
 
-
-    // --------------------------------------------------------
-    // SPRINT
-    // --------------------------------------------------------
 
     if (Input::isKeyDown(Key::LeftShift))
     {
@@ -146,10 +203,6 @@ void Application::processInput(float deltaTime)
     }
 
 
-    // --------------------------------------------------------
-    // CAMERA MOVEMENT
-    // --------------------------------------------------------
-
     m_player.getCamera().move(
         forward,
         right,
@@ -157,10 +210,6 @@ void Application::processInput(float deltaTime)
         deltaTime
     );
 
-
-    // --------------------------------------------------------
-    // MOUSE CAMERA
-    // --------------------------------------------------------
 
     constexpr float mouseSensitivity = 0.10f;
 
@@ -170,73 +219,29 @@ void Application::processInput(float deltaTime)
     const float mouseY =
         Input::getMouseDeltaY() * mouseSensitivity;
 
+
     m_player.getCamera().rotate(
         mouseX,
         -mouseY
     );
 
 
-    // --------------------------------------------------------
-    // ESCAPE
-    // --------------------------------------------------------
-
     if (Input::isKeyPressed(Key::Escape))
-    {
         m_running = false;
-    }
 
-
-    // --------------------------------------------------------
-    // PRIMARY ACTION
-    // LEFT CLICK
-    // --------------------------------------------------------
 
     if (Input::isMousePressed(MouseButton::Left))
-    {
-        std::cout
-            << "[Input] Primary Action\n";
-    }
-
-
-    // --------------------------------------------------------
-    // SECONDARY ACTION
-    // RIGHT CLICK
-    // --------------------------------------------------------
+        std::cout << "[Input] Primary Action\n";
 
     if (Input::isMousePressed(MouseButton::Right))
-    {
-        std::cout
-            << "[Input] Secondary Action\n";
-    }
-
-
-    // --------------------------------------------------------
-    // INTERACTION
-    // E
-    // --------------------------------------------------------
+        std::cout << "[Input] Secondary Action\n";
 
     if (Input::isKeyPressed(Key::E))
-    {
-        std::cout
-            << "[Input] Interact\n";
-    }
-
-
-    // --------------------------------------------------------
-    // RELOAD
-    // R
-    // --------------------------------------------------------
+        std::cout << "[Input] Interact\n";
 
     if (Input::isKeyPressed(Key::R))
-    {
-        std::cout
-            << "[Input] Reload\n";
-    }
+        std::cout << "[Input] Reload\n";
 
-
-    // --------------------------------------------------------
-    // WEAPON / ITEM SLOTS
-    // --------------------------------------------------------
 
     if (Input::isKeyPressed(Key::Num1))
         std::cout << "[Input] Slot 1\n";
@@ -277,10 +282,6 @@ int Application::run()
         << "Entering main loop...\n";
 
 
-    // --------------------------------------------------------
-    // HEADLESS MODE
-    // --------------------------------------------------------
-
     if (!m_window)
     {
         std::cout
@@ -300,17 +301,9 @@ int Application::run()
     }
 
 
-    // --------------------------------------------------------
-    // DELTA TIME
-    // --------------------------------------------------------
-
     auto previousTime =
         std::chrono::steady_clock::now();
 
-
-    // --------------------------------------------------------
-    // GAME LOOP
-    // --------------------------------------------------------
 
     while (m_running)
     {
@@ -336,9 +329,7 @@ int Application::run()
             Input::processEvent(event);
 
             if (event.type == SDL_EVENT_QUIT)
-            {
                 m_running = false;
-            }
         }
 
 
@@ -347,6 +338,14 @@ int Application::run()
         // ----------------------------------------------------
 
         processInput(deltaTime);
+
+
+        // ----------------------------------------------------
+        // WORLD
+        // ----------------------------------------------------
+
+        m_world.update(deltaTime);
+
         m_player.update(deltaTime);
 
 
@@ -356,28 +355,19 @@ int Application::run()
 
         m_renderer.beginFrame();
 
-        const float worldTime =
-            std::chrono::duration<float>(
-                currentTime.time_since_epoch()
-            ).count();
-
         m_renderer.drawWorld(
-            m_player.getCamera()
+            m_player.getCamera(),
+            m_world
         );
 
         m_renderer.endFrame();
 
 
         // ----------------------------------------------------
-        // INPUT FRAME UPDATE
+        // INPUT FRAME
         // ----------------------------------------------------
 
         Input::update();
-
-
-        // ----------------------------------------------------
-        // SMALL CPU YIELD
-        // ----------------------------------------------------
 
         SDL_Delay(1);
     }
@@ -415,4 +405,4 @@ void Application::shutdown()
         << "====================================\n";
 }
 
-} // namespace Pelvis
+}

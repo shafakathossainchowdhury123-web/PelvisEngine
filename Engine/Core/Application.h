@@ -5,29 +5,39 @@
 #include "../Renderer/Renderer.h"
 #include "../Camera/Camera.h"
 #include "../Player/Player.h"
+#include "../World/World.h"
 
 namespace Pelvis
 {
-    class Application
-    {
-    public:
-        Application();
-        ~Application();
 
-        bool initialize();
-        int run();
-        void shutdown();
+class Application
+{
+public:
 
-    private:
+    Application();
+    ~Application();
+
+    bool initialize();
+    int run();
+    void shutdown();
+
+private:
+
+    void processInput(float deltaTime);
+
+    bool m_running = false;
+
+    SDL_Window* m_window = nullptr;
+
+    Renderer m_renderer;
 
     Player m_player;
-        void processInput(float deltaTime);
 
-        bool m_running = false;
+    World m_world;
 
-        SDL_Window* m_window = nullptr;
+    Entity* m_cube1 = nullptr;
+    Entity* m_cube2 = nullptr;
+    Entity* m_cube3 = nullptr;
+};
 
-        Renderer m_renderer;
-    };
 }
-
