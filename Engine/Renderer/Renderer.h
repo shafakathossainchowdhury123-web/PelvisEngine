@@ -14,18 +14,25 @@ class Renderer
 {
 public:
 
-    Renderer() = default;
-    ~Renderer() = default;
+    Renderer();
+    ~Renderer();
 
     bool initialize(SDL_Window* window);
 
     void beginFrame();
+
+    void drawTriangle();
 
     void drawCube(
         const Camera& camera
     );
 
     void drawCube(
+        const Camera& camera,
+        const Entity& entity
+    );
+
+    void drawModel(
         const Camera& camera,
         const Entity& entity
     );
@@ -47,27 +54,26 @@ public:
 
     void shutdown();
 
+    bool isInitialized() const;
+
 private:
 
     bool createShaders();
 
     bool createCubeResources();
 
-    SDL_Window* m_window = nullptr;
+    SDL_Window* m_window;
+    SDL_GLContext m_context;
 
-    SDL_GLContext m_context = nullptr;
+    GLuint m_shaderProgram;
 
-    GLuint m_shaderProgram = 0;
+    GLuint m_vertexArray;
+    GLuint m_vertexBuffer;
 
-    GLuint m_vertexArray = 0;
+    GLint m_modelLocation;
+    GLint m_viewProjectionLocation;
 
-    GLuint m_vertexBuffer = 0;
-
-    GLint m_viewProjectionLocation = -1;
-
-    GLint m_modelLocation = -1;
-
-    bool m_initialized = false;
+    bool m_initialized;
 };
 
 }

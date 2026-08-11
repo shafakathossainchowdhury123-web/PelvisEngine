@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 
+#include "../Assets/AssetManager.h"
 #include "../Renderer/Renderer.h"
 #include "../Camera/Camera.h"
 #include "../Player/Player.h"
@@ -30,6 +31,8 @@ private:
     SDL_Window* m_window = nullptr;
 
     Renderer m_renderer;
+
+    AssetManager m_assets;
 
     Player m_player;
 

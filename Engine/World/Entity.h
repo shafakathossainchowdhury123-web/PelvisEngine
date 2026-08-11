@@ -8,6 +8,8 @@
 namespace Pelvis
 {
 
+class Model;
+
 using EntityID = std::uint32_t;
 
 class Entity
@@ -26,11 +28,19 @@ public:
     Transform& getTransform();
     const Transform& getTransform() const;
 
+    void setModel(Model* model);
+    Model* getModel();
+    const Model* getModel() const;
+
 private:
 
     EntityID m_id;
+
     std::string m_name;
+
     Transform m_transform;
+
+    Model* m_model = nullptr;
 };
 
 }

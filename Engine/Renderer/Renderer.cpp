@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include "../Camera/Camera.h"
+#include "../Graphics/Model.h"
 #include "../World/Entity.h"
 #include "../World/World.h"
 #include "../World/Transform.h"
@@ -10,6 +11,24 @@
 
 namespace Pelvis
 {
+
+Renderer::Renderer()
+    : m_window(nullptr)
+    , m_context(nullptr)
+    , m_shaderProgram(0)
+    , m_vertexArray(0)
+    , m_vertexBuffer(0)
+    , m_modelLocation(-1)
+    , m_viewProjectionLocation(-1)
+    , m_initialized(false)
+{
+}
+
+Renderer::~Renderer()
+{
+    shutdown();
+}
+
 
 static constexpr float PI = 3.14159265359f;
 
@@ -961,6 +980,86 @@ void Renderer::drawGrid(
     );
 }
 
+void Renderer::drawModel(
+    const Camera& camera,
+    const Entity& entity
+)
+{
+    if (!m_initialized)
+        return;
+
+    const Model* model =
+        entity.getModel();
+
+    if (!model ||
+        !model->isLoaded())
+    {
+        return;
+    }
+
+    int width = 1280;
+    int height = 720;
+
+    SDL_GetWindowSize(
+        m_window,
+        &width,
+        &height
+    );
+
+    if (height <= 0)
+        height = 1;
+
+    float projection[16];
+    float view[16];
+    float viewProjection[16];
+    float modelMatrix[16];
+
+    makePerspective(
+        projection,
+        camera.getFOV(),
+        static_cast<float>(width) /
+            static_cast<float>(height),
+        camera.getNearPlane(),
+        camera.getFarPlane()
+    );
+
+    makeView(
+        view,
+        camera
+    );
+
+    multiplyMatrix(
+        viewProjection,
+        projection,
+        view
+    );
+
+    makeModelMatrix(
+        modelMatrix,
+        entity.getTransform()
+    );
+
+    glUseProgram(
+        m_shaderProgram
+    );
+
+    glUniformMatrix4fv(
+        m_viewProjectionLocation,
+        1,
+        GL_FALSE,
+        viewProjection
+    );
+
+    glUniformMatrix4fv(
+        m_modelLocation,
+        1,
+        GL_FALSE,
+        modelMatrix
+    );
+
+    model->draw();
+}
+
 void Renderer::drawWorld(
     const Camera& camera
 )
@@ -978,7 +1077,18 @@ void Renderer::drawWorld(
 
     for (const auto& entity : world.getEntities())
     {
-        if (entity)
+        if (!entity)
+            continue;
+
+        if (entity->getModel() &&
+            entity->getModel()->isLoaded())
+        {
+            drawModel(
+                camera,
+                *entity
+            );
+        }
+        else
         {
             drawCube(
                 camera,
